@@ -1,0 +1,115 @@
+From 4486a1058605aabe4a297e7e46e7a016f8541a6f Mon Sep 17 00:00:00 2001
+From: Kristian Evensen <kristian.evensen@gmail.com>
+Date: Mon, 2 Aug 2021 14:35:30 +0200
+Subject: [PATCH] kernel: Add MHI modules
+
+Add menuconfig entries for MHI bus, wwan framework, mhi network driver
+and mhi wwan and mbim drivers.
+---
+ package/kernel/linux/modules/netdevices.mk | 67 ++++++++++++++++++++++
+ package/kernel/linux/modules/other.mk      | 17 ++++++
+ 2 files changed, 84 insertions(+)
+
+diff --git a/package/kernel/linux/modules/netdevices.mk b/package/kernel/linux/modules/netdevices.mk
+index aebe2511d7..be818e88be 100644
+--- a/package/kernel/linux/modules/netdevices.mk
++++ b/package/kernel/linux/modules/netdevices.mk
+@@ -1348,3 +1348,70 @@ define KernelPackage/rmnet/description
+ endef
+ 
+ $(eval $(call KernelPackage,rmnet))
++
++define KernelPackage/mhi-net
++  SUBMENU:=$(NETWORK_DEVICES_MENU)
++  TITLE:=MHI Network Device
++  DEPENDS:=@PCI_SUPPORT +kmod-mhi-bus
++  KCONFIG:=CONFIG_MHI_NET
++  FILES:=$(LINUX_DIR)/drivers/net/mhi_net.ko
++  AUTOLOAD:=$(call AutoProbe,mhi_net)
++endef
++
++define KernelPackage/mhi-net/description
++  Driver for MHI network interface
++endef
++
++$(eval $(call KernelPackage,mhi-net))
++
++define KernelPackage/wwan
++  SUBMENU:=$(NETWORK_DEVICES_MENU)
++  TITLE:=WWAN Driver Core
++  DEPENDS:=@PCI_SUPPORT
++  KCONFIG:=CONFIG_WWAN
++  FILES:=$(LINUX_DIR)/drivers/net/wwan/wwan.ko
++  AUTOLOAD:=$(call AutoProbe,wwan)
++endef
++
++define KernelPackage/wwan/description
++  The WWAN core driver provides a common framework for WWAN drivers.
++endef
++
++$(eval $(call KernelPackage,wwan))
++
++define KernelPackage/mhi-wwan-ctrl
++  SUBMENU:=$(NETWORK_DEVICES_MENU)
++  TITLE:=MHI WWAN control driver for QCOM-based PCIe modems
++  DEPENDS:=@PCI_SUPPORT +kmod-wwan +kmod-mhi-net
++  KCONFIG:=CONFIG_MHI_WWAN_CTRL
++  FILES:=$(LINUX_DIR)/drivers/net/wwan/mhi_wwan_ctrl.ko
++  AUTOLOAD:=$(call AutoProbe,mhi_wwan_ctrl)
++endef
++
++define KernelPackage/mhi-wwan-ctrl/description
++  MHI WWAN CTRL allows QCOM-based PCIe modems to expose different modem
++  control protocols/ports to userspace, including AT, MBIM, QMI, DIAG
++  and FIREHOSE. These protocols can be accessed directly from userspace
++  (e.g. AT commands) or via libraries/tools (e.g. libmbim, libqmi,
++  libqcdm...).
++endef
++
++$(eval $(call KernelPackage,mhi-wwan-ctrl))
++
++define KernelPackage/mhi-wwan-mbim
++  SUBMENU:=$(NETWORK_DEVICES_MENU)
++  TITLE:=MHI WWAN MBIM network driver for QCOM-based PCIe modems
++  DEPENDS:=@PCI_SUPPORT +kmod-wwan +kmod-mhi-net
++  KCONFIG:=CONFIG_MHI_WWAN_MBIM
++  FILES:=$(LINUX_DIR)/drivers/net/wwan/mhi_wwan_mbim.ko
++  AUTOLOAD:=$(call AutoProbe,mhi_wwan_mbim)
++endef
++
++define KernelPackage/mhi-wwan-mbim/description
++  MHI WWAN MBIM is a WWAN network driver for QCOM-based PCIe modems.
++  It implements MBIM over MHI, for IP data aggregation and muxing.
++  A default wwan0 network interface is created for MBIM data session
++  ID 0. Additional links can be created via wwan rtnetlink type.
++endef
++
++$(eval $(call KernelPackage,mhi-wwan-mbim))
+diff --git a/package/kernel/linux/modules/other.mk b/package/kernel/linux/modules/other.mk
+index 83d998c83a..ae02be1b6b 100644
+--- a/package/kernel/linux/modules/other.mk
++++ b/package/kernel/linux/modules/other.mk
+@@ -1271,3 +1271,20 @@ define KernelPackage/f71808e-wdt/description
+ endef
+ 
+ $(eval $(call KernelPackage,f71808e-wdt))
++
++define KernelPackage/mhi-bus
++  SUBMENU:=$(OTHER_MENU)
++  TITLE:=Modem Host Interface (MHI) bus and PCI driver
++  KCONFIG:=CONFIG_MHI_BUS \
++           CONFIG_MHI_BUS_PCI_GENERIC \
++           CONFIG_MHI_BUS_DEBUG=y
++  FILES:=$(LINUX_DIR)/drivers/bus/mhi/mhi_pci_generic.ko \
++         $(LINUX_DIR)/drivers/bus/mhi/core/mhi.ko
++  AUTOLOAD:=$(call AutoProbe,mhi mhi_pci_generic)
++endef
++
++define KernelPackage/mhi-bus/description
++  Kernel modules for the Qualcoom MHI bus.
++endef
++
++$(eval $(call KernelPackage,mhi-bus))
+-- 
+2.25.1
+
